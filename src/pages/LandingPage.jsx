@@ -9,11 +9,11 @@ export default function LandingPage({
   theme = 'dark'
 }) {
   const handleDownload = () => {
-    onTriggerToast('Starting download for Ghost AI Desktop v1.0.0...', 'download');
-    // Trigger download of release archive or script
+    onTriggerToast('Starting download for GhostAI.exe...', 'download');
+    // Trigger download of release executable
     const link = document.createElement('a');
-    link.href = '/GhostAI-v1.0.0-Windows.zip';
-    link.setAttribute('download', 'GhostAI-v1.0.0-Windows.zip');
+    link.href = 'https://github.com/NAITIK-builds/GhastAi/releases/download/v1.0.0/GhostAI.exe';
+    link.setAttribute('download', 'GhostAI.exe');
     document.body.appendChild(link);
     link.click();
     document.body.removeChild(link);

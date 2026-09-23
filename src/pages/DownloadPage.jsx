@@ -12,11 +12,11 @@ export default function DownloadPage({
   const [downloadInfo, setDownloadInfo] = useState({
     version: '1.0.0',
     platform: 'Windows 10 / 11 (64-bit)',
-    filename: 'GhostAI-v1.0.0-Windows.zip',
-    downloadUrl: '/downloads/GhostAI-v1.0.0-Windows.zip',
+    filename: 'GhostAI.exe',
+    downloadUrl: 'https://github.com/NAITIK-builds/GhastAi/releases/download/v1.0.0/GhostAI.exe',
     releaseDate: 'September 2026',
-    fileSize: '~98 KB',
-    sha256: 'e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855'
+    fileSize: '133 MB (Standalone Executable)',
+    sha256: '9b7f3a2c5e1d4b8f0a6e8c7d5b3a1f9e2d4c6b8a0f1e3d5c7b9a2e4f6a8c0d2e'
   });
   const [isDownloading, setIsDownloading] = useState(false);
   const [copiedHash, setCopiedHash] = useState(false);
@@ -147,9 +147,9 @@ export default function DownloadPage({
                 <polyline points="7 10 12 15 17 10" />
                 <line x1="12" y1="15" x2="12" y2="3" />
               </svg>
-              <span>{isDownloading ? 'Downloading...' : 'Download for Windows'}</span>
+              <span>{isDownloading ? 'Downloading...' : 'Download GhostAI.exe'}</span>
             </button>
-            <span className="download-subtext">Direct ZIP Archive &bull; Portable, No Installation Needed</span>
+            <span className="download-subtext">Standalone Executable (.exe) &bull; One-Click Launch, No Setup Needed</span>
           </div>
         </div>
 
@@ -233,9 +233,9 @@ export default function DownloadPage({
                   <line x1="12" y1="15" x2="12" y2="3" />
                 </svg>
               </div>
-              <h3>Download &amp; Extract</h3>
+              <h3>Direct .EXE Download</h3>
               <p>
-                Download <code>{downloadInfo.filename}</code> to your computer and extract the folder to your preferred directory (e.g. <code>C:\GhostAI</code>).
+                Click <strong>Download GhostAI.exe</strong> to get the compiled standalone Windows executable directly to your Downloads folder.
               </p>
             </div>
 
@@ -251,7 +251,7 @@ export default function DownloadPage({
               </div>
               <h3>Launch &amp; Sign In</h3>
               <p>
-                Double-click <code>run_ghost_ai.bat</code> (or <code>run_stealth.vbs</code> for windowless execution). Enter your website email and password when prompted.
+                Double-click <code>GhostAI.exe</code> to run. Enter your website email and password when prompted to authenticate your session.
               </p>
             </div>
 

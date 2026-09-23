@@ -57,10 +57,10 @@ export default function UserDashboard({
   }, [activeUser?.id]);
 
   const handleDownload = () => {
-    onTriggerToast('Downloading Ghost AI Software for Windows...', 'download');
+    onTriggerToast('Downloading GhostAI.exe for Windows...', 'download');
     const link = document.createElement('a');
-    link.href = '/downloads/GhostAI-v1.0.0-Windows.zip';
-    link.setAttribute('download', 'GhostAI-v1.0.0-Windows.zip');
+    link.href = 'https://github.com/NAITIK-builds/GhastAi/releases/download/v1.0.0/GhostAI.exe';
+    link.setAttribute('download', 'GhostAI.exe');
     document.body.appendChild(link);
     link.click();
     document.body.removeChild(link);

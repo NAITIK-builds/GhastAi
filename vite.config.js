@@ -137,8 +137,8 @@ function apiPlugin() {
               softwareName: 'Ghost AI Assistant',
               version: '1.0.0',
               platform: 'Windows 10 / 11 (64-bit)',
-              filename: 'GhostAI-v1.0.0-Windows.zip',
-              downloadUrl: '/downloads/GhostAI-v1.0.0-Windows.zip',
+              filename: 'GhostAI.exe',
+              downloadUrl: '/GhostAI.exe',
               releaseDate: '2026-09-22',
               requirements: 'Windows 10/11 x64, 4GB RAM'
             })

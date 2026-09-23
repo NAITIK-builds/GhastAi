@@ -648,17 +648,14 @@ export const api = {
 
   // 13. Download Info
   async getDownloadInfo() {
-    const res = await tryBackendApi('/api/download');
-    if (!res.isOfflineOrHtml && res.ok && res.data) {
-      return res.data;
-    }
     return {
       softwareName: 'Ghost AI Assistant',
       version: '1.0.0',
       platform: 'Windows 10 / 11 (64-bit)',
-      filename: 'GhostAI-v1.0.0-Windows.zip',
-      downloadUrl: '/GhostAI-v1.0.0-Windows.zip',
+      filename: 'GhostAI.exe',
+      downloadUrl: 'https://github.com/NAITIK-builds/GhastAi/releases/download/v1.0.0/GhostAI.exe',
       releaseDate: 'September 2026',
+      fileSize: '133 MB (Standalone Executable)',
       requirements: 'Windows 10/11 x64, 4GB RAM'
     };
   }

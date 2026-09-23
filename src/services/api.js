@@ -161,20 +161,28 @@ async function syncToCloud(pathStr, data, method = 'set') {
   } catch (e) {}
 }
 
+const IS_DEV = Boolean(import.meta.env.DEV);
+const CUSTOM_API_URL = import.meta.env.VITE_API_URL;
+
 /**
  * Safely calls backend /api/*.
- * If backend returns valid JSON (local Vite dev server), returns { ok: true, data }.
- * If backend returns HTML (Netlify 404/SPA rewrite) or network error, returns { isOfflineOrHtml: true }.
+ * In local dev (Vite dev server), uses local Express-like middleware.
+ * In production (Vercel, Netlify), skips calling /api/* to avoid 404s and uses Firebase cloud sync directly.
  */
 async function tryBackendApi(endpoint, options = {}) {
+  if (!IS_DEV && !CUSTOM_API_URL) {
+    return { ok: false, status: 404, isOfflineOrHtml: true, error: 'Static hosting mode (Firebase Cloud DB active)' };
+  }
+
+  const targetUrl = CUSTOM_API_URL ? `${CUSTOM_API_URL.replace(/\/$/, '')}${endpoint}` : endpoint;
   try {
-    const res = await fetch(endpoint, options);
+    const res = await fetch(targetUrl, options);
     const contentType = res.headers.get('content-type') || '';
     if (contentType.includes('application/json')) {
       const data = await res.json();
       return { ok: res.ok, status: res.status, data, isOfflineOrHtml: false };
     }
-    // Received HTML (e.g. Netlify index.html fallback for missing API)
+    // Received HTML (e.g. static fallback for missing API)
     return { ok: false, status: res.status, isOfflineOrHtml: true, error: 'Static host - no local backend server' };
   } catch (err) {
     return { ok: false, status: 0, isOfflineOrHtml: true, error: err.message };
@@ -217,7 +225,7 @@ export const api = {
       return res.data;
     }
 
-    const users = getLocalUsers();
+    const users = await this.getUsers();
     const user = users.find((u) => (userId && u.id === userId) || (email && u.email?.toLowerCase() === email?.toLowerCase()));
     if (!user) {
       throw new Error('User not found');
@@ -254,7 +262,7 @@ export const api = {
     }
 
     // Fallback: Local + Cloud sync
-    const users = getLocalUsers();
+    const users = await this.getUsers();
     const normEmail = email.trim().toLowerCase();
     if (users.some((u) => u.email?.toLowerCase() === normEmail)) {
       throw new Error('An account with this email already exists');
@@ -297,8 +305,8 @@ export const api = {
       throw new Error(res.data?.error || 'Invalid credentials');
     }
 
-    // Fallback: Client authentication against local database
-    const users = getLocalUsers();
+    // Fallback: Client authentication against live cloud/local database
+    const users = await this.getUsers();
     const normEmail = email.trim().toLowerCase();
     const hash = await sha256Hex(password);
 

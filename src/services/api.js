@@ -8,7 +8,7 @@
  * Prevents HTML/JSON parsing SyntaxErrors completely.
  */
 
-import { db, ref, get, set, update, remove } from '../firebase';
+import { getDbInstance, ref, get, set, update, remove } from '../firebase';
 
 const SEED_USERS = [
   {
@@ -150,10 +150,11 @@ function saveLocalHistory(history) {
 }
 
 // Cloud sync fire-and-forget
-function syncToCloud(pathStr, data, method = 'set') {
-  if (!db) return;
+async function syncToCloud(pathStr, data, method = 'set') {
   try {
-    const targetRef = ref(db, pathStr);
+    const dbInstance = await getDbInstance();
+    if (!dbInstance) return;
+    const targetRef = ref(dbInstance, pathStr);
     if (method === 'set') set(targetRef, data).catch(() => {});
     else if (method === 'update') update(targetRef, data).catch(() => {});
     else if (method === 'remove') remove(targetRef).catch(() => {});
@@ -189,10 +190,11 @@ export const api = {
       return res.data;
     }
 
-    // Try Firebase RTDB if available
-    if (db) {
-      try {
-        const snapshot = await get(ref(db, 'users'));
+    // Try Firebase RTDB if available and verified
+    try {
+      const dbInstance = await getDbInstance();
+      if (dbInstance) {
+        const snapshot = await get(ref(dbInstance, 'users'));
         if (snapshot.exists()) {
           const cloudVal = snapshot.val();
           const list = Array.isArray(cloudVal) ? cloudVal : Object.values(cloudVal);
@@ -201,8 +203,8 @@ export const api = {
             return list;
           }
         }
-      } catch (e) {}
-    }
+      }
+    } catch (e) {}
 
     return getLocalUsers();
   },
@@ -599,9 +601,10 @@ export const api = {
       return res.data;
     }
 
-    if (db) {
-      try {
-        const snapshot = await get(ref(db, 'history'));
+    try {
+      const dbInstance = await getDbInstance();
+      if (dbInstance) {
+        const snapshot = await get(ref(dbInstance, 'history'));
         if (snapshot.exists()) {
           const cloudVal = snapshot.val();
           const list = Array.isArray(cloudVal) ? cloudVal : Object.values(cloudVal);
@@ -610,8 +613,8 @@ export const api = {
             return list;
           }
         }
-      } catch (e) {}
-    }
+      }
+    } catch (e) {}
 
     return getLocalHistory();
   },

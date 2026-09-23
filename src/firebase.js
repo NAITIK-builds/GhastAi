@@ -19,12 +19,44 @@ export const firebaseConfig = {
 // Initialize Firebase app
 export const app = initializeApp(firebaseConfig);
 
-// Initialize Realtime Database
 let db = null;
-try {
-  db = getDatabase(app);
-} catch (err) {
-  console.warn("[Firebase] Could not initialize Realtime Database instance:", err);
+let dbCheckDone = false;
+let dbValid = false;
+
+/**
+ * Checks whether the configured Realtime Database exists on Firebase
+ * without triggering unhandled WebSocket connection warnings.
+ */
+export async function isRealtimeDbAvailable() {
+  if (dbCheckDone) return dbValid;
+  try {
+    const url = `${firebaseConfig.databaseURL}/.json?shallow=true`;
+    const res = await fetch(url, { method: 'GET' }).catch(() => null);
+    // 404 indicates the database is not yet created in the Firebase console
+    if (res && res.status !== 404) {
+      dbValid = true;
+    } else {
+      dbValid = false;
+    }
+  } catch (e) {
+    dbValid = false;
+  }
+  dbCheckDone = true;
+  return dbValid;
+}
+
+/**
+ * Returns the Realtime Database instance only when verified, preventing
+ * premature connection warnings on uncreated databases.
+ */
+export async function getDbInstance() {
+  const isAvailable = await isRealtimeDbAvailable();
+  if (isAvailable && !db) {
+    try {
+      db = getDatabase(app);
+    } catch (e) {}
+  }
+  return isAvailable ? db : null;
 }
 
 export { db, ref, get, set, update, remove, onValue };

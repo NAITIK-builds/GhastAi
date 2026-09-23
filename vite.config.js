@@ -12,7 +12,7 @@ const USERS_DB_PATH = path.resolve(__dirname, '../src/engine/users_db.json');
 const SESSIONS_DB_PATH = path.resolve(__dirname, '../src/engine/sessions_db.json');
 const HISTORY_DB_PATH = path.resolve(__dirname, '../src/engine/license_history.json');
 
-const CLOUD_DB_URL = process.env.VITE_FIREBASE_DB_URL || 'https://ghastai-default-rtdb.firebaseio.com';
+const CLOUD_DB_URL = process.env.VITE_FIREBASE_DB_URL || 'https://ghastai-default-rtdb.asia-southeast1.firebasedatabase.app';
 
 function syncCloudUser(user, method = 'PUT') {
   if (!user || !user.id) return;

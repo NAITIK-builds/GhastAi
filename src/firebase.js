@@ -8,7 +8,7 @@ import { getDatabase, ref, get, set, update, remove, onValue } from "firebase/da
 export const firebaseConfig = {
   apiKey: "AIzaSyBwwQNOdwhJ7XpJvXkgoZEdCmbfNS7Uolk",
   authDomain: "ghastai.firebaseapp.com",
-  databaseURL: import.meta.env.VITE_FIREBASE_DB_URL || "https://ghastai-default-rtdb.firebaseio.com",
+  databaseURL: import.meta.env.VITE_FIREBASE_DB_URL || "https://ghastai-default-rtdb.asia-southeast1.firebasedatabase.app",
   projectId: "ghastai",
   storageBucket: "ghastai.firebasestorage.app",
   messagingSenderId: "41639471644",

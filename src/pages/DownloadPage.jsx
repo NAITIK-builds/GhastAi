@@ -1,6 +1,7 @@
 import React, { useState, useEffect } from 'react';
 import styled from 'styled-components';
 import { playTechBeep } from '../utils/sound';
+import { api } from '../services/api';
 
 export default function DownloadPage({
   onNavigate,
@@ -21,8 +22,7 @@ export default function DownloadPage({
   const [copiedHash, setCopiedHash] = useState(false);
 
   useEffect(() => {
-    fetch('/api/download')
-      .then((res) => res.json())
+    api.getDownloadInfo()
       .then((data) => {
         if (data && data.downloadUrl) {
           setDownloadInfo((prev) => ({

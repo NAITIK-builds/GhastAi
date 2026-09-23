@@ -1,5 +1,6 @@
 import React, { useState, useEffect } from 'react';
 import styled from 'styled-components';
+import { api } from '../services/api';
 
 export default function AuthModal({
   isOpen,
@@ -48,14 +49,8 @@ export default function AuthModal({
 
       setIsSubmitting(true);
       try {
-        const res = await fetch('/api/register', {
-          method: 'POST',
-          headers: { 'Content-Type': 'application/json' },
-          body: JSON.stringify({ name, email, password, confirmPassword })
-        });
-        const data = await res.json();
-
-        if (res.ok && data.success) {
+        const data = await api.register({ name, email, password, confirmPassword });
+        if (data.success) {
           // Requirement #2:
           // Registration successful -> Account created -> Login
           setRegSuccessNotice(true);
@@ -64,11 +59,9 @@ export default function AuthModal({
           setMode('login');
           setPassword('');
           setConfirmPassword('');
-        } else {
-          onTriggerToast(data.error || 'Registration failed', 'alert');
         }
       } catch (err) {
-        onTriggerToast('Failed to connect to authentication server', 'alert');
+        onTriggerToast(err.message || 'Registration failed', 'alert');
       } finally {
         setIsSubmitting(false);
       }
@@ -76,22 +69,14 @@ export default function AuthModal({
       // Login
       setIsSubmitting(true);
       try {
-        const res = await fetch('/api/login', {
-          method: 'POST',
-          headers: { 'Content-Type': 'application/json' },
-          body: JSON.stringify({ email, password })
-        });
-        const data = await res.json();
-
-        if (res.ok && data.success) {
+        const data = await api.login({ email, password });
+        if (data.success) {
           onTriggerToast(`Signed in as ${data.user.name}`, 'welcome');
           onLogin(data.user);
           onClose();
-        } else {
-          onTriggerToast(data.error || 'Invalid email or password', 'alert');
         }
       } catch (err) {
-        onTriggerToast('Login failed (offline or server error)', 'alert');
+        onTriggerToast(err.message || 'Invalid email or password', 'alert');
       } finally {
         setIsSubmitting(false);
       }

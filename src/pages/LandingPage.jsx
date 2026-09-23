@@ -12,9 +12,11 @@ export default function LandingPage({
     onTriggerToast('Starting download for Ghost AI Desktop v1.0.0...', 'download');
     // Trigger download of release archive or script
     const link = document.createElement('a');
-    link.href = '/api/download';
-    link.target = '_blank';
+    link.href = '/GhostAI-v1.0.0-Windows.zip';
+    link.setAttribute('download', 'GhostAI-v1.0.0-Windows.zip');
     document.body.appendChild(link);
+    link.click();
+    document.body.removeChild(link);
     // Also trigger mock file download for user convenience
     const blob = new Blob(
       [

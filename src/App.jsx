@@ -4,6 +4,7 @@ import Footer from './components/Footer';
 import Toast from './components/Toast';
 import AuthModal from './components/AuthModal';
 import AdminPortal from './components/AdminPortal';
+import { api } from './services/api';
 
 // Focused Pages (Unwanted pages removed per user request)
 import HomePage from './pages/HomePage';
@@ -42,21 +43,21 @@ export default function App() {
   const [authInitialMode, setAuthInitialMode] = useState('login');
   const [toasts, setToasts] = useState([]);
 
-  // Fetch latest users from backend
-  const fetchUsers = () => {
-    fetch('/api/admin/users')
-      .then((res) => res.json())
-      .then((data) => {
-        if (Array.isArray(data)) {
-          setUsers(data);
-          setActiveUser((prev) => {
-            if (!prev) return null;
-            const match = data.find((u) => u.id === prev.id || u.email.toLowerCase() === prev.email?.toLowerCase());
-            return match || prev;
-          });
-        }
-      })
-      .catch((err) => console.log('API sync skipped (offline):', err));
+  // Fetch latest users
+  const fetchUsers = async () => {
+    try {
+      const data = await api.getUsers();
+      if (Array.isArray(data) && data.length > 0) {
+        setUsers(data);
+        setActiveUser((prev) => {
+          if (!prev) return null;
+          const match = data.find((u) => u.id === prev.id || u.email.toLowerCase() === prev.email?.toLowerCase());
+          return match || prev;
+        });
+      }
+    } catch (err) {
+      // Gracefully silent when offline
+    }
   };
 
   useEffect(() => {
@@ -141,7 +142,7 @@ export default function App() {
     if (activeUser && activeUser.id === updatedUser.id) {
       setActiveUser((prev) => ({ ...prev, ...updatedUser }));
     }
-    fetch('/api/admin/users').then(() => fetchUsers()).catch(() => {});
+    fetchUsers();
   };
 
   // Render current page dynamically

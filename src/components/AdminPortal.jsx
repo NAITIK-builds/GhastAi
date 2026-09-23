@@ -1,6 +1,7 @@
 import React, { useState, useEffect, useMemo } from 'react';
 import styled from 'styled-components';
 import { playTechBeep } from '../utils/sound';
+import { api } from '../services/api';
 
 export default function AdminPortal({
   users = [],
@@ -46,13 +47,12 @@ export default function AdminPortal({
 
   const fetchHistory = async () => {
     try {
-      const res = await fetch('/api/admin/history');
-      if (res.ok) {
-        const data = await res.json();
+      const data = await api.getHistory();
+      if (Array.isArray(data)) {
         setHistory(data);
       }
     } catch (err) {
-      console.error('Failed to fetch history:', err);
+      console.warn('Failed to fetch history:', err);
     }
   };
 
@@ -64,12 +64,9 @@ export default function AdminPortal({
     playTechBeep('click');
     setIsSyncing(true);
     try {
-      const res = await fetch('/api/admin/users');
-      if (res.ok) {
-        const data = await res.json();
-        if (Array.isArray(data)) {
-          data.forEach((u) => onUpdateUser(u));
-        }
+      const data = await api.getUsers();
+      if (Array.isArray(data)) {
+        data.forEach((u) => onUpdateUser(u));
       }
       await fetchHistory();
       const now = new Date();
@@ -112,18 +109,13 @@ export default function AdminPortal({
     const newMinutes = Math.floor(newSeconds / 60);
     const newRupees = Math.round((newSeconds / 60) * RATE_PER_MINUTE * 100) / 100;
 
-    fetch('/api/admin/add-time', {
-      method: 'POST',
-      headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({
-        userId: user.id,
-        amountRupees: enteredRupees,
-        addedBy: activeUser?.email || 'admin@ghostai.internal'
-      })
+    api.addTime({
+      userId: user.id,
+      amountRupees: enteredRupees,
+      addedBy: activeUser?.email || 'admin@ghostai.internal'
     })
-      .then((res) => res.json())
       .then((data) => {
-        if (data.user) {
+        if (data?.user) {
           onUpdateUser({
             ...user,
             ...data.user,
@@ -174,13 +166,9 @@ export default function AdminPortal({
     });
 
     try {
-      await fetch('/api/admin/toggle-access', {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ userId: user.id, allowed: nextAllowed })
-      });
+      await api.toggleAccess({ userId: user.id, allowed: nextAllowed });
     } catch (e) {
-      console.error('Failed to sync access toggle to backend', e);
+      console.warn('Access toggle offline sync', e);
     }
 
     if (onTriggerToast) {
@@ -197,15 +185,11 @@ export default function AdminPortal({
     }
     playTechBeep('click');
     try {
-      const res = await fetch('/api/admin/reset-time', {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({
-          userId: user.id,
-          adminEmail: activeUser?.email || 'admin@ghostai.internal'
-        })
+      const res = await api.resetTime({
+        userId: user.id,
+        adminEmail: activeUser?.email || 'admin@ghostai.internal'
       });
-      if (res.ok) {
+      if (res?.success) {
         onUpdateUser({
           ...user,
           remaining_seconds: 0,
@@ -217,7 +201,7 @@ export default function AdminPortal({
         if (onTriggerToast) onTriggerToast(`Reset balance to 0 for ${user.name}`, 'alert');
       }
     } catch (e) {
-      console.error('Reset time failed', e);
+      console.warn('Reset time failed', e);
     }
   };
 
@@ -248,25 +232,20 @@ export default function AdminPortal({
     setIsSavingEdit(true);
     playTechBeep('click');
     try {
-      const res = await fetch('/api/admin/edit-candidate', {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({
-          userId: editingCandidate.id,
-          name: editFormData.name,
-          email: editFormData.email,
-          balanceRupees: Number(editFormData.balanceRupees),
-          remainingMinutes: Number(editFormData.remainingMinutes),
-          allowedByAdmin: editFormData.allowedByAdmin,
-          role: editFormData.role,
-          password: editFormData.password || undefined,
-          adminEmail: activeUser?.email || 'admin@ghostai.internal'
-        })
+      const data = await api.editCandidate({
+        userId: editingCandidate.id,
+        name: editFormData.name,
+        email: editFormData.email,
+        balanceRupees: Number(editFormData.balanceRupees),
+        remainingMinutes: Number(editFormData.remainingMinutes),
+        allowedByAdmin: editFormData.allowedByAdmin,
+        role: editFormData.role,
+        password: editFormData.password || undefined,
+        adminEmail: activeUser?.email || 'admin@ghostai.internal'
       });
 
-      const data = await res.json();
-      if (!res.ok) {
-        throw new Error(data.error || 'Failed to update candidate');
+      if (!data?.user) {
+        throw new Error('Failed to update candidate');
       }
 
       const updatedUser = {
@@ -293,19 +272,10 @@ export default function AdminPortal({
     }
     playTechBeep('click');
     try {
-      const res = await fetch('/api/admin/delete-candidate', {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ userId: user.id })
-      });
-      const data = await res.json();
-      if (res.ok) {
-        setEditingCandidate(null);
-        handleManualSync();
-        if (onTriggerToast) onTriggerToast(`Candidate ${user.name} removed.`, 'check');
-      } else {
-        throw new Error(data.error || 'Failed to delete candidate');
-      }
+      await api.deleteCandidate({ userId: user.id });
+      setEditingCandidate(null);
+      handleManualSync();
+      if (onTriggerToast) onTriggerToast(`Candidate ${user.name} removed.`, 'check');
     } catch (err) {
       if (onTriggerToast) onTriggerToast(err.message, 'alert');
     }
@@ -315,17 +285,11 @@ export default function AdminPortal({
   const handleDeleteHistoryEntry = async (historyId) => {
     playTechBeep('click');
     try {
-      const res = await fetch('/api/admin/delete-history-entry', {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ historyId })
-      });
-      if (res.ok) {
-        setHistory((prev) => prev.filter((h) => h.id !== historyId));
-        if (onTriggerToast) onTriggerToast('Audit entry removed', 'check');
-      }
+      await api.deleteHistoryEntry({ historyId });
+      setHistory((prev) => prev.filter((h) => h.id !== historyId));
+      if (onTriggerToast) onTriggerToast('Audit entry removed', 'check');
     } catch (err) {
-      console.error('Failed to delete history entry', err);
+      console.warn('Failed to delete history entry', err);
     }
   };
 
@@ -339,21 +303,16 @@ export default function AdminPortal({
     setIsCreatingCandidate(true);
     playTechBeep('click');
     try {
-      const res = await fetch('/api/admin/create-candidate', {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({
-          name: newCandidateData.name,
-          email: newCandidateData.email,
-          password: newCandidateData.password,
-          initialRupees: Number(newCandidateData.initialRupees) || 0,
-          addedBy: activeUser?.email || 'admin@ghostai.internal'
-        })
+      const data = await api.createCandidate({
+        name: newCandidateData.name,
+        email: newCandidateData.email,
+        password: newCandidateData.password,
+        initialRupees: Number(newCandidateData.initialRupees) || 0,
+        addedBy: activeUser?.email || 'admin@ghostai.internal'
       });
 
-      const data = await res.json();
-      if (!res.ok) {
-        throw new Error(data.error || 'Failed to create candidate');
+      if (!data?.candidate) {
+        throw new Error('Failed to create candidate');
       }
 
       onUpdateUser(data.candidate);

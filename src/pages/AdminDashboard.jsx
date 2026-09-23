@@ -1,5 +1,6 @@
 import React, { useState, useEffect } from 'react';
 import styled from 'styled-components';
+import { api } from '../services/api';
 
 export default function AdminDashboard({
   activeUser,
@@ -16,25 +17,23 @@ export default function AdminDashboard({
 
   const fetchUsers = async () => {
     try {
-      const res = await fetch('/api/admin/users');
-      if (res.ok) {
-        const data = await res.json();
+      const data = await api.getUsers();
+      if (Array.isArray(data)) {
         setUsers(data);
       }
     } catch (err) {
-      onTriggerToast('Failed to load users', 'alert');
+      // Quiet on offline
     }
   };
 
   const fetchHistory = async () => {
     try {
-      const res = await fetch('/api/admin/history');
-      if (res.ok) {
-        const data = await res.json();
+      const data = await api.getHistory();
+      if (Array.isArray(data)) {
         setHistory(data);
       }
     } catch (err) {
-      console.error(err);
+      // Quiet on offline
     }
   };
 
@@ -64,28 +63,21 @@ export default function AdminDashboard({
     const mins = Math.floor(rupees / 2.5);
     setIsSubmitting(true);
     try {
-      const res = await fetch('/api/admin/add-time', {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({
-          userId: selectedUser.id,
-          amountRupees: rupees,
-          addedBy: activeUser?.email || 'admin@ghostai.internal'
-        })
+      const result = await api.addTime({
+        userId: selectedUser.id,
+        amountRupees: rupees,
+        addedBy: activeUser?.email || 'admin@ghostai.internal'
       });
 
-      const result = await res.json();
-      if (res.ok && result.success) {
+      if (result.success) {
         onTriggerToast(`Added ₹${rupees} (+${mins} mins) to ${selectedUser.email}! Desktop software will sync automatically.`, 'check');
         setSelectedUser(null);
         setAmountToAdd(150);
         fetchUsers();
         fetchHistory();
-      } else {
-        onTriggerToast(result.error || 'Failed to add time', 'alert');
       }
     } catch (err) {
-      onTriggerToast('Server error while adding time', 'alert');
+      onTriggerToast(err.message || 'Error while adding time', 'alert');
     } finally {
       setIsSubmitting(false);
     }

@@ -1,5 +1,6 @@
 import React, { useState, useEffect } from 'react';
 import styled from 'styled-components';
+import { api } from '../services/api';
 
 export default function UserDashboard({
   activeUser,
@@ -30,9 +31,8 @@ export default function UserDashboard({
     if (!activeUser?.id) return;
     if (!silent) setIsRefreshing(true);
     try {
-      const res = await fetch(`/api/user-status?userId=${encodeURIComponent(activeUser.id)}`);
-      if (res.ok) {
-        const data = await res.json();
+      const data = await api.getUserStatus(activeUser.id, activeUser.email);
+      if (data) {
         setUserData((prev) => ({ ...prev, ...data }));
         setRemainingSeconds(data.remaining_seconds || 0);
         setSoftwareStatus(data.software_status || (data.remaining_seconds > 0 ? 'Available' : 'Expired'));
